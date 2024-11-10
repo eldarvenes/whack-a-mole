@@ -4,8 +4,6 @@
 #include "mole.h"
 #include "config.h"
 
-#define GAME_SPEED 1000  // Hastighet for å vise nye moles i millisekunder
-
 class Game {
 public:
     Game(int buzzerPin);

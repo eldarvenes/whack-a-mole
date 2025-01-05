@@ -24,3 +24,7 @@ void Buzzer::playErrorSound() {
 void Buzzer::stop() {
     digitalWrite(pin, LOW);
 }
+
+void Buzzer::playTone(int frequency, int duration) {
+    tone(pin, frequency, duration);
+}

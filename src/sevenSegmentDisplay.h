@@ -9,6 +9,8 @@ public:
     SevenSegmentDisplay(int dataPin, int clkPin, int csPin);  // Konstruktør
     void init();                   // Initialiser displayet
     void showScoreAndLives(int score, int lives);  // Vis poeng og liv
+    void showMemory();  // Vis tekst på displayet
+    void showText(const char* text);  // Vis tekst på displayet
 
 private:
     LedControl lc;                 // Kontroll for MAX7219

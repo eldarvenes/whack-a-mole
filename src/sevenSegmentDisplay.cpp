@@ -72,3 +72,49 @@ void SevenSegmentDisplay::showScoreAndLives(int score, int lives) {
         lastLives = lives;
     }
 }
+
+void SevenSegmentDisplay::showMemory() {
+    lc.clearDisplay(0); // Rens displayet først
+    const char* text = "MEMORY";
+    // Maks 8 tegn kan vises samtidig
+    for (int i = 0; i < 8 && text[i] != '\0'; i++) {
+        char c = text[i];
+        if (c >= '0' && c <= '9') {
+            lc.setDigit(0, i, c - '0', false); // Vis tall
+        } else {
+            // Enkle bokstaver og symboler
+            switch (c) {
+                case 'M': lc.setRow(0, i, 0b01100011); break; // Tilpasset 'M'
+                case 'E': lc.setChar(0, i, 'E', false); break;
+                case 'O': lc.setChar(0, i, 'o', false); break;
+                case 'R': lc.setRow(0, i, 0b01010000); break; // Tilpasset 'R'
+                case 'Y': lc.setRow(0, i, 0b01011000); break; // Tilpasset 'Y'
+                case ' ': lc.setChar(0, i, ' ', false); break; // Blank plass
+                default:  lc.setChar(0, i, '-', false); break; // Ukjente tegn
+            }
+        }
+    }
+}
+
+void SevenSegmentDisplay::showText(const char* text) {
+    Serial.println("init-display");
+    lc.clearDisplay(0); // Rens displayet først
+
+    // Maks 8 tegn kan vises samtidig
+    for (int i = 0; i < 8 && text[i] != '\0'; i++) {
+        char c = text[i];
+        if (c >= '0' && c <= '9') {
+            lc.setDigit(0, i, c - '0', false); // Vis tall
+        } else {
+            switch (c) {
+                case 'M': lc.setRow(0, i, 0b01100011); break; // Tilpasset 'M'
+                case 'E': lc.setChar(0, i, 'E', false); break;
+                case 'O': lc.setChar(0, i, 'o', false); break;
+                case 'R': lc.setRow(0, i, 0b01010000); break; // Tilpasset 'R'
+                case 'Y': lc.setRow(0, i, 0b01011000); break; // Tilpasset 'Y'
+                case ' ': lc.setChar(0, i, ' ', false); break; // Blank plass
+                default:  lc.setChar(0, i, '-', false); break; // Ukjente tegn
+            }
+        }
+    }
+}

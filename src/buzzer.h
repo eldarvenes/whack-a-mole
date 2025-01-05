@@ -8,7 +8,8 @@ public:
     Buzzer(int pin);
     void playSound(int duration, int intensity = 128);
     void playErrorSound();
-    void stop();                         
+    void stop();
+    void playTone(int frequency, int duration);                         
     void init();                         
 
 private:

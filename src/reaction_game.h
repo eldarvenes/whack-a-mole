@@ -18,10 +18,16 @@ public:
     void update() override;                                     // Oppdater spillstatus
     void waitForRestart() override;                             // Vent på restart
     AbstractGame::GameState getState() const override;          // Hent spillstatus
+    void playCoolStartSound(Buzzer& buzzer); // Spill en kul startlyd
+    bool waitingForNextRound = false; // Indikerer om vi venter på neste runde
+    unsigned long nextRoundStartTime = 0; // Tidspunkt for når neste runde starter
+    void waitForNextRoundStart(); // Vent på neste runde
+
 
 private:
     void startRound();       // Start en ny runde
     void endGame();          // Avslutt spillet
+    
 
     Buzzer& buzzer;          // Buzzer for lydeffekter
     SevenSegmentDisplay& display; // 7-segment display for poengvisning
@@ -45,6 +51,7 @@ private:
     bool player2LightOn;
     unsigned long player1StartTime;
     unsigned long player2StartTime;
+    unsigned long lastReactionDisplayTime = 0; // Tidspunkt for siste visning av reaksjonstider
     
 };
 

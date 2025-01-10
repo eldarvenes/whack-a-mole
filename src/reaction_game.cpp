@@ -49,148 +49,155 @@ void ReactionGame::init() {
     digitalWrite(player2MolePins[0], LOW);
 
     // Spill en startlyd
-    buzzer.playTone(880, 300);
-    delay(300);
-    buzzer.playTone(440, 300);
-    buzzer.stop();
-
+    playCoolStartSound(buzzer);
+    delay (1000); // Vent litt før vi starter
     startRound();
 }
 
 void ReactionGame::startRound() {
-    if (gameMode == ONE_PLAYER) {
-        if (roundCountPlayer1 >= 5) {
-            displayAverageReactionTime(); // Vis gjennomsnittet for én spiller
-            endGame();
-            return;
+    // Sjekk om spillet er ferdig
+    if (roundCount >= 5) {
+        if (gameMode == ONE_PLAYER) {
+            displayAverageReactionTime();
+        } else if (gameMode == TWO_PLAYER) {
+            displayAverageReactionTimesTwoPlayer();
         }
+        endGame();
+        return;
+    }
 
-        if (roundCountPlayer1 > 0) {
-            // Vis reaksjonstiden for forrige runde
-            unsigned long lastReactionTime = reactionTimesPlayer1[roundCountPlayer1 - 1];
-            display.showScoreAndLives(lastReactionTime, 0); // Bare spillerens reaksjonstid vises
+    // Vis reaksjonstider fra forrige runde hvis tilgjengelig
+    if (roundCount > 0) {
+        if (gameMode == ONE_PLAYER) {
+            unsigned long lastReactionTime = reactionTimesPlayer1[roundCount - 1];
+            display.showScoreAndLives(lastReactionTime, 0);
             Serial.print("Previous Reaction Time: ");
             Serial.println(lastReactionTime);
-        }
-
-        lightOn = false;
-        delay(random(2000, 5000)); // Vent et tilfeldig antall millisekunder
-        activeMole = random(NUM_MOLES); // Velg en tilfeldig LED
-        digitalWrite(molePins[activeMole], HIGH);
-        startTime = millis();
-        lightOn = true;
-        buzzer.playTone(1000, 200); // Lyd når LED tennes
-        delay(200);
-        buzzer.stop();
-    } else if (gameMode == TWO_PLAYER) {
-        if (roundCountPlayer1 >= 5 && roundCountPlayer2 >= 5) {
-            displayAverageReactionTimesTwoPlayer(); // Vis gjennomsnittet for begge spillere
-            endGame();
-            return;
-        }
-
-        if (roundCountPlayer1 > 0) {
-            unsigned long lastReactionTimePlayer1 = reactionTimesPlayer1[roundCountPlayer1 - 1];
+        } else if (gameMode == TWO_PLAYER) {
+            unsigned long lastReactionTimePlayer1 = reactionTimesPlayer1[roundCount - 1];
+            unsigned long lastReactionTimePlayer2 = reactionTimesPlayer2[roundCount - 1];
+            display.showScoreAndLives(lastReactionTimePlayer2, lastReactionTimePlayer1);
             Serial.print("Player 1 Previous Reaction Time: ");
             Serial.println(lastReactionTimePlayer1);
-        }
-
-        if (roundCountPlayer2 > 0) {
-            unsigned long lastReactionTimePlayer2 = reactionTimesPlayer2[roundCountPlayer2 - 1];
             Serial.print("Player 2 Previous Reaction Time: ");
             Serial.println(lastReactionTimePlayer2);
         }
-
-        if (roundCountPlayer1 < 5) {
-            int player1Mole = random(2); // Velg en tilfeldig LED for spiller 1
-            digitalWrite(player1MolePins[player1Mole], HIGH);
-            player1StartTime = millis();
-            player1LightOn = true;
-        }
-
-        if (roundCountPlayer2 < 5) {
-            int player2Mole = random(2); // Velg en tilfeldig LED for spiller 2
-            digitalWrite(player2MolePins[player2Mole], HIGH);
-            player2StartTime = millis();
-            player2LightOn = true;
-        }
     }
+
+    // Sett opp ny runde
+    lightOn = false;
+    waitingForNextRound = true;
+    nextRoundStartTime = millis() + random(2000, 6000); // Planlegg ny runde
 }
 
 void ReactionGame::update() {
-    if (gameState == RUNNING) {
-        unsigned long currentTime = millis();
+    unsigned long currentTime = millis();
 
-        // Håndter én spiller-modus
-        if (gameMode == ONE_PLAYER && lightOn) {
-            for (int i = 0; i < NUM_MOLES; i++) {
-                if (digitalRead(buttonPins[i]) == HIGH) {
-                    digitalWrite(molePins[activeMole], LOW); // Slukk LED-en
-                    unsigned long reactionTime = currentTime - startTime;
-                    reactionTimesPlayer1[roundCountPlayer1++] = reactionTime;
-                    Serial.print("Reaction Time (Round ");
-                    Serial.print(roundCountPlayer1);
+    // Sjekk om vi venter på neste runde
+    if (waitingForNextRound && currentTime >= nextRoundStartTime) {
+        waitingForNextRound = false;
+
+        if (gameMode == ONE_PLAYER) {
+            // Start én spiller-runde
+            lightOn = true;
+            activeMole = random(NUM_MOLES); // Velg en tilfeldig LED
+            digitalWrite(molePins[activeMole], HIGH);
+            startTime = currentTime;
+            buzzer.playTone(1000, 200); // Lyd når LED tennes
+        } else if (gameMode == TWO_PLAYER) {
+            // Start to spiller-runde
+            player1LightOn = true;
+            player2LightOn = true;
+
+            int player1Mole = random(2);
+            int player2Mole = random(2);
+
+            digitalWrite(player1MolePins[player1Mole], HIGH);
+            digitalWrite(player2MolePins[player2Mole], HIGH);
+
+            player1StartTime = currentTime;
+            player2StartTime = currentTime;
+
+            buzzer.playTone(1000, 200); // Lyd når LED tennes
+        }
+        return;
+    }
+
+    // Håndter én spiller-modus
+    if (gameMode == ONE_PLAYER && lightOn) {
+        for (int i = 0; i < NUM_MOLES; i++) {
+            if (digitalRead(buttonPins[i]) == HIGH) {
+                digitalWrite(molePins[activeMole], LOW); // Slukk LED-en
+                unsigned long reactionTime = currentTime - startTime;
+                reactionTimesPlayer1[roundCount++] = reactionTime;
+
+                Serial.print("Reaction Time (Round ");
+                Serial.print(roundCount);
+                Serial.print("): ");
+                Serial.println(reactionTime);
+
+                display.showScoreAndLives(reactionTime, 0); // Vis reaksjonstiden
+                lightOn = false;
+
+                startRound(); // Start neste runde
+                return;
+            }
+        }
+    }
+
+    // Håndter to-spiller-modus
+    if (gameMode == TWO_PLAYER) {
+        bool bothPlayersFinished = false;
+
+        // Sjekk spiller 1
+        if (player1LightOn) {
+            for (int i = 0; i < 2; i++) {
+                if (digitalRead(player1ButtonPins[i]) == HIGH) {
+                    digitalWrite(player1MolePins[i], LOW); // Slukk LED-en
+                    unsigned long reactionTime = currentTime - player1StartTime;
+                    reactionTimesPlayer1[roundCount] = reactionTime;
+
+                    Serial.print("Player 1 Reaction Time (Round ");
+                    Serial.print(roundCount);
                     Serial.print("): ");
                     Serial.println(reactionTime);
 
-                    // Spill bekreftelsestone uten delay
-                    //if (!buzzer.isPlaying()) {
-                     //   buzzer.playTone(1200, 200);
-                    //}
-
-                    lightOn = false;
-                    startTime = currentTime; // Start ny runde etter 1 sekund
+                    player1LightOn = false;
                 }
             }
+        }
 
-            // Start ny runde etter 1 sekund
-            if (!lightOn && currentTime - startTime >= 1000) {
-                startRound();
-            }
-        } 
-        // Håndter to-spiller-modus
-        else if (gameMode == TWO_PLAYER) {
-            // Sjekk knappetrykk for spiller 1
-            if (player1LightOn) {
-                for (int i = 0; i < 2; i++) {
-                    if (digitalRead(player1ButtonPins[i]) == HIGH) {
-                        digitalWrite(player1MolePins[i], LOW); // Slukk LED-en
-                        unsigned long reactionTime = currentTime - player1StartTime;
-                        reactionTimesPlayer1[roundCountPlayer1++] = reactionTime;
-                        Serial.print("Player 1 Reaction Time (Round ");
-                        Serial.print(roundCountPlayer1);
-                        Serial.print("): ");
-                        Serial.println(reactionTime);
+        // Sjekk spiller 2
+        if (player2LightOn) {
+            for (int i = 0; i < 2; i++) {
+                if (digitalRead(player2ButtonPins[i]) == HIGH) {
+                    digitalWrite(player2MolePins[i], LOW); // Slukk LED-en
+                    unsigned long reactionTime = currentTime - player2StartTime;
+                    reactionTimesPlayer2[roundCount] = reactionTime;
 
-                        player1LightOn = false;
-                        player1StartTime = currentTime; // Start ny runde etter 1 sekund
-                    }
+                    Serial.print("Player 2 Reaction Time (Round ");
+                    Serial.print(roundCount);
+                    Serial.print("): ");
+                    Serial.println(reactionTime);
+
+                    player2LightOn = false;
                 }
             }
+        }
 
-            // Sjekk knappetrykk for spiller 2
-            if (player2LightOn) {
-                for (int i = 0; i < 2; i++) {
-                    if (digitalRead(player2ButtonPins[i]) == HIGH) {
-                        digitalWrite(player2MolePins[i], LOW); // Slukk LED-en
-                        unsigned long reactionTime = currentTime - player2StartTime;
-                        reactionTimesPlayer2[roundCountPlayer2++] = reactionTime;
-                        Serial.print("Player 2 Reaction Time (Round ");
-                        Serial.print(roundCountPlayer2);
-                        Serial.print("): ");
-                        Serial.println(reactionTime);
+        // Sjekk om begge spillerne er ferdige
+        if (!player1LightOn || !player2LightOn) {
+            bothPlayersFinished = true;
+        }
 
-                        player2LightOn = false;
-                        player2StartTime = currentTime; // Start ny runde etter 1 sekund
-                    }
-                }
-            }
+        if (bothPlayersFinished) {
+            display.showScoreAndLives(
+                reactionTimesPlayer2[roundCount],
+                reactionTimesPlayer1[roundCount]
+            );
 
-            // Start ny runde for begge spillere etter 1 sekund
-            if (!player1LightOn && !player2LightOn &&
-                currentTime - max(player1StartTime, player2StartTime) >= 1000) {
-                startRound();
-            }
+            roundCount++; // Øk felles runde-teller
+            startRound(); // Start neste runde
         }
     }
 }
@@ -293,4 +300,16 @@ void ReactionGame::displayAverageReactionTimesTwoPlayer() {
 
     // Oppdater displayet med begge spillernes gjennomsnitt
     display.showScoreAndLives(averagePlayer2, averagePlayer1); // Forutsetter at displayet støtter to verdier
+}
+
+void ReactionGame::playCoolStartSound(Buzzer& buzzer) {
+    const int melody[] = {440, 523, 587, 659, 880, 784, 659, 440}; // Toner i Hz, fallende til stigende
+    const int durations[] = {150, 150, 150, 200, 200, 200, 150, 300}; // Varighet i ms
+
+    for (size_t i = 0; i < sizeof(melody) / sizeof(melody[0]); i++) {
+        buzzer.playTone(melody[i], durations[i]); // Spill tone
+        delay(durations[i] + 50); // Kort pause mellom tonene
+    }
+
+    buzzer.stop();
 }

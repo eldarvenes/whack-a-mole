@@ -131,13 +131,6 @@ void Memory::checkInput() {
                     // Blink alle LED-er for å indikere suksess
                     for (int j = 0; j < 2; j++) {
                         buzzer.playTone(1200, 100);
-                        for (int k = 0; k < NUM_MOLES; k++) {
-                            digitalWrite(molePins[k], HIGH);
-                        }
-                        delay(100);
-                        for (int k = 0; k < NUM_MOLES; k++) {
-                            digitalWrite(molePins[k], LOW);
-                        }
                         delay(100);
                     }
                     buzzer.stop();

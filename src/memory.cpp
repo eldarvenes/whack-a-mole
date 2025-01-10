@@ -6,13 +6,14 @@ Memory::Memory(Buzzer& buzzer, SevenSegmentDisplay& display)
 
 
 void Memory::init() {
+    display.init();
     generateSequence();
     currentStep = 0;
     playerStep = 0;
     sequenceLength = 3; // Start med en sekvens på 3 trinn
     waitingForInput = false;
     gameState = RUNNING;
-
+    display.showScoreAndLives(0, 0);
     Serial.println("Memory game started. Watch the sequence!");
 
     // Spill en startlyd
@@ -23,6 +24,7 @@ void Memory::init() {
 }
 
 void Memory::generateSequence() {
+    display.scramble();
     for (int i = 0; i < 50; i++) {
         sequence[i] = random(NUM_MOLES); // Generer tilfeldig sekvens mellom 0 og NUM_MOLES-1
     }
@@ -82,36 +84,56 @@ void Memory::showSequence() {
 }
 
 void Memory::checkInput() {
+    static unsigned long lastButtonPressTime = 0; // For debounce
+    static bool buttonPreviouslyPressed[NUM_MOLES] = {false};
+
+    unsigned long currentTime = millis();
+
     for (int i = 0; i < NUM_MOLES; i++) {
-        if (digitalRead(buttonPins[i]) == HIGH) { // Spilleren trykker en knapp
+        bool buttonState = digitalRead(buttonPins[i]) == HIGH;
+
+        if (buttonState && !buttonPreviouslyPressed[i] && (currentTime - lastButtonPressTime > 100)) {
+            // Registrer knappetrykk
+            lastButtonPressTime = currentTime;
+
+            // Blink lyset for den trykkede knappen
+            digitalWrite(molePins[i], HIGH);
+            delay(50); // Kort blinktid, men vurder å gjøre dette ikke-blokkerende også
+            digitalWrite(molePins[i], LOW);
+
             if (sequence[playerStep] == i) {
                 Serial.print("Correct: ");
                 Serial.println(i);
-
-                // Spill en kort bekreftelsestone
-                buzzer.playTone(1000, 200);
-                delay(200);
+                buzzer.playTone(440 + (i * 100), 50); // Kort tone
                 buzzer.stop();
 
                 playerStep++;
+
                 if (playerStep == sequenceLength) {
                     // Spilleren gjettet riktig hele sekvensen
                     Serial.println("Sequence complete! Adding a new step...");
+                    
+                    // Oppdater poengsummen
+                    int pointsEarned = sequenceLength;
+                    display.showScoreAndLives(pointsEarned, 0);
+                    Serial.print("Score updated: ");
+                    Serial.println(pointsEarned);
+
                     // Blink alle LED-er for å indikere suksess
-                    for (int j = 0; j < 2; j++) { // Blink 3 ganger
+                    for (int j = 0; j < 2; j++) {
+                        buzzer.playTone(1200, 100);
                         for (int k = 0; k < NUM_MOLES; k++) {
                             digitalWrite(molePins[k], HIGH);
                         }
-                        buzzer.playTone(1200, 100); // Spill en høy tone for hver blink
                         delay(100);
-
                         for (int k = 0; k < NUM_MOLES; k++) {
                             digitalWrite(molePins[k], LOW);
                         }
-                        delay(200);
+                        delay(100);
                     }
                     buzzer.stop();
 
+                    // Forbered neste runde
                     sequenceLength++;
                     playerStep = 0;
                     currentStep = 0;
@@ -120,13 +142,25 @@ void Memory::checkInput() {
             } else {
                 // Spilleren gjettet feil
                 Serial.println("Wrong button! Game over.");
-                buzzer.playTone(400, 500); // Lav tone for feil
-                delay(500);
+
+                // Blink den riktige knappen
+                int correctButton = sequence[playerStep];
+                for (int blink = 0; blink < 5; blink++) {
+                    digitalWrite(molePins[correctButton], HIGH);
+                    delay(50);
+                    digitalWrite(molePins[correctButton], LOW);
+                    delay(50);
+                }
+
+                buzzer.playTone(400, 500);
                 buzzer.stop();
+
+                display.showScoreAndLives(0, 0);
                 endGame();
             }
-            delay(300); // Debounce
         }
+
+        buttonPreviouslyPressed[i] = buttonState; // Oppdater knappens tilstand
     }
 }
 

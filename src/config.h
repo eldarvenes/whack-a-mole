@@ -18,4 +18,11 @@ const int dataPin = 8;
 const int clkPin = 0;
 const int csPin = 1;
 
+// Config for reaksjonsspill
+const int player1MolePins[2] = {9, 13}; // To LED-er for spiller 1
+const int player1ButtonPins[2] = {2, 6}; // To knapper for spiller 1
+
+const int player2MolePins[2] = {12, 10}; // To LED-er for spiller 2
+const int player2ButtonPins[2] = {5, 4}; // To knapper for spiller 2
+
 #endif

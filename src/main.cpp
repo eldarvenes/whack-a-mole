@@ -1,6 +1,7 @@
 #include "config.h"
 #include "game.h"
 #include "Memory.h"
+#include "reaction_game.h"
 #include "Buzzer.h"
 #include "SevenSegmentDisplay.h"
 #include <Arduino.h>
@@ -11,23 +12,22 @@ SevenSegmentDisplay display(dataPin, clkPin, csPin);
 // Opprett spillinstanser
 Game whackAMoleGame(buzzer, display); // Spill 1
 Memory memoryGame(buzzer, display);      // Spill 2 (Memory-spillet)
+ReactionGame reactionGame(buzzer, display); // Spill 3 (Reaksjonsspill)
+
 
 // Spilltyper
-enum GameType { WHACK_A_MOLE, MEMORY }; 
+enum GameType { WHACK_A_MOLE, MEMORY, REACTION_GAME }; 
 GameType selectedGame = WHACK_A_MOLE;
 
 // Prototyper
 void selectGame();
 
 void setup() {
-    Serial.begin(9600);
-    display.init();
-    display.showScoreAndLives(0,0);
-    delay(2000);
+    //Serial.begin(9600);
     buzzer.init();
 
     // Sett opp knapper og lys
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         pinMode(buttonPins[i], INPUT);  // Sett knappene som INPUT
         pinMode(molePins[i], OUTPUT);  // Sett lysene som OUTPUT
         digitalWrite(molePins[i], LOW); // Slå av lysene
@@ -41,24 +41,27 @@ void setup() {
             whackAMoleGame.init();
             break;
         case MEMORY:
-        display.showMemory();
-        delay(2000);
             memoryGame.init();
+            break;
+        case REACTION_GAME:
+            reactionGame.init();
             break;
     }
 }
 
 void selectGame() {
-    // Slå på alle lys for å indikere valg
-    for (int i = 0; i < 2; i++) {
+    // Slå på lys for å indikere valg
+    for (int i = 0; i < 3; i++) {
         digitalWrite(molePins[i], HIGH);
     }
+    digitalWrite(molePins[3], LOW); // Slå av rødt lys
+    digitalWrite(molePins[4], LOW); // Slå av gult lys
 
     while (true) {
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             if (digitalRead(buttonPins[i]) == HIGH) { // Hvis en knapp trykkes
                 // Slukk alle lys for å indikere at spill er valgt
-                for (int j = 0; j < 2; j++) {
+                for (int j = 0; j < 3; j++) {
                     digitalWrite(molePins[j], LOW);
                 }
 
@@ -82,6 +85,9 @@ void loop() {
         case MEMORY:
             activeGame = &memoryGame;
             break;
+        case REACTION_GAME:
+            activeGame = &reactionGame;
+            break;
     }
 
     // Oppdater aktivt spill
@@ -99,6 +105,9 @@ void loop() {
             case MEMORY:
                 memoryGame.init();
                 break;
+            case REACTION_GAME:
+                reactionGame.init();
+            break;
         }
     }
 }

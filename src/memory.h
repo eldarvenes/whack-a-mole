@@ -17,6 +17,7 @@ public:
     void flashSequence(int upToStep); // Vis sekvensen så langt
     GameState getState() const override; // Hent spilltilstanden
     void waitForRestart() override;
+    void playCoolStartSound(Buzzer& buzzer); // Spill en kul startlyd
 
 private:
     Buzzer& buzzer;
@@ -33,6 +34,7 @@ private:
     void generateSequence();    // Generer en tilfeldig sekvens
     void showSequence();        // Vis sekvensen til spilleren
     void checkInput();          // Sjekk om spilleren gjettet riktig
+    
 };
 
 #endif // MEMORY_H

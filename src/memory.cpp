@@ -17,9 +17,18 @@ void Memory::init() {
     Serial.println("Memory game started. Watch the sequence!");
 
     // Spill en startlyd
-    buzzer.playTone(880, 300); // Høy tone for å indikere start
-    delay(300);
-    buzzer.playTone(440, 300); // Lavere tone for å indikere sekvensstart
+    playCoolStartSound(buzzer);
+}
+
+void Memory::playCoolStartSound(Buzzer& buzzer) {
+    const int melody[] = {880, 988, 1047, 880, 659, 440}; // Toner i Hz
+    const int durations[] = {200, 200, 200, 300, 300, 400}; // Varighet i ms
+
+    for (size_t i = 0; i < sizeof(melody) / sizeof(melody[0]); i++) { // Bruk size_t
+        buzzer.playTone(melody[i], durations[i]); // Spill tone
+        delay(durations[i] + 50); // Kort pause mellom tonene
+    }
+
     buzzer.stop();
 }
 

@@ -128,7 +128,7 @@ void Memory::checkInput() {
                     Serial.print("Score updated: ");
                     Serial.println(pointsEarned);
 
-                    // Blink alle LED-er for å indikere suksess
+                    // Gi lyd for riktig sekvens
                     for (int j = 0; j < 2; j++) {
                         buzzer.playTone(1200, 100);
                         delay(100);

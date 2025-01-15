@@ -52,6 +52,8 @@ private:
     unsigned long player1StartTime;
     unsigned long player2StartTime;
     unsigned long lastReactionDisplayTime = 0; // Tidspunkt for siste visning av reaksjonstider
+    int player1Mole;
+    int player2Mole;
     
 };
 

@@ -1,5 +1,6 @@
 #include "Memory.h"
 #include <Arduino.h>
+#include "highscore_manager.h"
 
 Memory::Memory(Buzzer& buzzer, SevenSegmentDisplay& display) 
     : buzzer(buzzer), display(display), gameState(GAME_OVER), currentStep(0), playerStep(0), sequenceLength(3), waitingForInput(false), lastStepTime(0) {}
@@ -13,7 +14,7 @@ void Memory::init() {
     sequenceLength = 3; // Start med en sekvens på 3 trinn
     waitingForInput = false;
     gameState = RUNNING;
-    display.showScoreAndLives(0, 0);
+    display.showScoreAndLives(0, HighscoreManager::getHighScore(MEMORY_HIGHSCORE_ADDR));
     Serial.println("Memory game started. Watch the sequence!");
 
     // Spill en startlyd
@@ -124,7 +125,8 @@ void Memory::checkInput() {
                     
                     // Oppdater poengsummen
                     int pointsEarned = sequenceLength;
-                    display.showScoreAndLives(pointsEarned, 0);
+                    HighscoreManager::updateHighScore(pointsEarned, MEMORY_HIGHSCORE_ADDR);
+                    display.showScoreAndLives(pointsEarned, HighscoreManager::getHighScore(MEMORY_HIGHSCORE_ADDR));
                     Serial.print("Score updated: ");
                     Serial.println(pointsEarned);
 

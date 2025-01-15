@@ -15,6 +15,7 @@ Game::Game(Buzzer& buzzer, SevenSegmentDisplay& display)
 void Game::init() {
     display.init();
     Serial.println("Starter Whack-a-Mole-spillet!");
+    
     for (int i = 0; i < NUM_MOLES; i++) {
         moles[i]->hide();
         moleDisplayTime[i] = 0;

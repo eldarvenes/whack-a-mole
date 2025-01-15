@@ -25,4 +25,7 @@ const int player1ButtonPins[2] = {2, 6}; // To knapper for spiller 1
 const int player2MolePins[2] = {12, 10}; // To LED-er for spiller 2
 const int player2ButtonPins[2] = {5, 4}; // To knapper for spiller 2
 
+#define WHACK_A_MOLE_HIGHSCORE_ADDR 0    // EEPROM-adresse for Whack-a-Mole
+#define MEMORY_HIGHSCORE_ADDR 4         // EEPROM-adresse for Memory
+
 #endif

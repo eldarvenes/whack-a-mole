@@ -5,6 +5,7 @@
 #include "Buzzer.h"
 #include "SevenSegmentDisplay.h"
 #include <Arduino.h>
+#include "highscore_manager.h"   
 
 Buzzer buzzer(3);       // Buzzer for lydeffekter
 SevenSegmentDisplay display(dataPin, clkPin, csPin);
@@ -30,7 +31,7 @@ void setup() {
     for (int i = 0; i < 3; i++) {
         pinMode(buttonPins[i], INPUT);  // Sett knappene som INPUT
         pinMode(molePins[i], OUTPUT);  // Sett lysene som OUTPUT
-        digitalWrite(molePins[i], LOW); // Slå av lysene
+        digitalWrite(molePins[i], LOW); // Slå av lysene   
     }
 
     selectGame(); // Start spillvalg
